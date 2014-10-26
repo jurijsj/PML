@@ -1,0 +1,197 @@
+---
+title: "Weight Lifting Exercise"
+author: "Jurijs Jefimovs"
+date: "Sunday, October 19, 2014"
+output: html_document
+---
+
+###Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set.
+
+###Executive summary
+In this paper was compared three classification algorithms against "Weight Lifting Exercise" dataset. These are:
+- Recursive Partitioning (rpart)
+- Random Forest (rf)
+- k-Nearest Neighbour (knn)
+
+The first algorithms  
+As was expected, the Random Forest has the highest accuracy among these three algorithms with accuracy rate 95%.
+
+*Notes: I've commented out some execution code, in order to build html faster. 
+
+```{r load_data, cache=TRUE}
+library(caret)
+setwd("D:\\Coursera\\repo\\predmachlearn-006\\assignment")
+
+url_train <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+url_test <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+train_file <- "train.csv"
+test_file <- "test.csv"
+#download.file(url_train, destfile = train_file)
+#download.file(url_test, destfile = test_file)
+train_data <- read.csv(train_file, na.strings=c("#DIV/0!", "NA"))
+test_data <- read.csv(test_file, na.strings=c("#DIV/0!", "NA"))
+set.seed(123)
+
+```
+
+
+###Exploratory data analysis
+```{r explore}
+#str(test_data)
+
+```
+It seems that first five columns (X,user_name and timestamps) can be filtered out. 
+
+
+###Preprocessing
+First step - let's cut out these variables from data.
+Next, lets do some data preparation:
+Find variables that doesnt give un much information (near zero vars).
+Then scale, center, inpute missing values and extract features using principal component analysis.
+
+
+```{r Preprocess}
+
+train_data <- train_data[,-c(1,2,3,4,5)]
+test_data <- test_data[,-c(1,2,3,4,5)]
+
+#checking near zero variables
+near_zero_vars <- nearZeroVar(train_data)
+train_data <- train_data[,-near_zero_vars]
+test_data <- test_data[,-near_zero_vars]
+
+#preprocess
+col_types <- sapply(train_data,class)
+
+preObj <- preProcess(train_data[,-119],  method = c("center", "scale", "knnImpute", "pca"), thresh = 0.95, k = 5)
+
+train_data.prep <- predict(preObj, newdata=train_data[,-119])
+test_data.prep <- predict(preObj, newdata=test_data[,-119])
+
+train_data.prep$classe <- train_data$classe
+
+```
+
+After test data preparation, lets divide test data into train and validation subsets in proportion 70% and 30% accordingly.
+
+```{r subsets}
+inTrain <- createDataPartition(y=train_data.prep$classe, p=0.7, list=FALSE)
+train_data.train <- train_data.prep[inTrain,]
+train_data.test <- train_data.prep[-inTrain,]
+
+```
+
+Now, we are ready to train the models. I've picked up tree classification methods to compare:
+- Recursive Partitioning (rpart)
+- Random Forest (rf)
+- k-Nearest Neighbour (knn)
+After each train, i will validate model againt test set made previously. Then i will compare the models against accuracy of prediction.
+
+### Recursive Partitioning
+```{r rpart}
+#modFit_rpart <- train(classe ~ ., data=train_data.train, method="rpart")
+#predict_rpart <- predict(modFit_rpart, train_data.test)
+#confusionMatrix(train_data.test$classe, predict_rpart)
+
+```
+In this model accuracy was wery low = 0.3934
+
+
+### Random Forest
+```{r rf}
+#modFit_rf <- train(classe ~ ., data=train_data.train, method="rf",  proxy = T)
+#predict_rf <- predict(modFit_rf, train_data.test)
+#confusionMatrix(train_data.test$classe, predict_rf)
+```
+Accuracy : 0.9573
+
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 1634   18   14    5    3
+         B   21 1080   30    4    4
+         C   12   24  972   18    0
+         D   10    9   48  895    2
+         E    5    2    5   17 1053
+
+Overall Statistics
+                                          
+               Accuracy : 0.9573          
+                 95% CI : (0.9519, 0.9624)
+    No Information Rate : 0.2858          
+    P-Value [Acc > NIR] : < 2.2e-16       
+                                          
+                  Kappa : 0.946           
+ Mcnemar's Test P-Value : 7.516e-05       
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            0.9715   0.9532   0.9093   0.9531   0.9915
+Specificity            0.9905   0.9876   0.9888   0.9860   0.9940
+Pos Pred Value         0.9761   0.9482   0.9474   0.9284   0.9732
+Neg Pred Value         0.9886   0.9888   0.9800   0.9911   0.9981
+Prevalence             0.2858   0.1925   0.1816   0.1596   0.1805
+Detection Rate         0.2777   0.1835   0.1652   0.1521   0.1789
+Detection Prevalence   0.2845   0.1935   0.1743   0.1638   0.1839
+Balanced Accuracy      0.9810   0.9704   0.9490   0.9696   0.9928
+
+
+### k-Nearest Neighbour
+```{r knn}
+#modFit_knn <- train(classe ~ ., data=train_data.train, method="knn")
+#predict_knn <- predict(modFit_knn, train_data.test)
+#confusionMatrix(train_data.test$classe, predict_knn)
+```
+Accuracy : 0.9286
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 1598   26   25   20    5
+         B   41 1027   56   11    4
+         C   23   25  928   46    4
+         D   12    6   63  881    2
+         E    2   10   15   24 1031
+
+Overall Statistics
+                                          
+               Accuracy : 0.9286          
+                 95% CI : (0.9218, 0.9351)
+    No Information Rate : 0.2848          
+    P-Value [Acc > NIR] : < 2.2e-16       
+                                          
+                  Kappa : 0.9098          
+ Mcnemar's Test P-Value : 2.382e-07       
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            0.9535   0.9388   0.8537   0.8971   0.9857
+Specificity            0.9819   0.9766   0.9796   0.9831   0.9895
+Pos Pred Value         0.9546   0.9017   0.9045   0.9139   0.9529
+Neg Pred Value         0.9815   0.9859   0.9673   0.9795   0.9969
+Prevalence             0.2848   0.1859   0.1847   0.1669   0.1777
+Detection Rate         0.2715   0.1745   0.1577   0.1497   0.1752
+Detection Prevalence   0.2845   0.1935   0.1743   0.1638   0.1839
+Balanced Accuracy      0.9677   0.9577   0.9167   0.9401   0.9876
+
+###Final prediction
+After set of predictions and validations i've picked up the model based on accuracy metric. Random Forest model has highest accuracy rate, so it will be used for final prediction.
+
+```{r fin_prediction}
+#predict.train <- predict(modFit_rf, test_data.prep)
+
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+#pml_write_files(predict.train)
+```
