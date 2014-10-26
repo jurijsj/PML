@@ -16,8 +16,7 @@ In this paper was compared three classification algorithms against "Weight Lifti
 - Random Forest (rf)
 - k-Nearest Neighbour (knn)
 
-The first algorithms  
-As was expected, the Random Forest has the highest accuracy among these three algorithms with accuracy rate 95%.
+As was expected, the Random Forest has the highest accuracy among these three algorithms with accuracy rate 95%. So that, in sample error rate is 0.05 or 5%, hence, we should expected higher out of sample expected rate. But after project submission I've received 19 of 20 correct answers.
 
 *Notes: I've commented out some execution code, in order to build html faster. 
 
@@ -130,3 +129,6 @@ pml_write_files = function(x){
 }
 pml_write_files(predict.train)
 ```
+
+###Conclusion
+
