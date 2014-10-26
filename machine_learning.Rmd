@@ -18,7 +18,7 @@ In this paper was compared three classification algorithms against "Weight Lifti
 
 As was expected, the Random Forest has the highest accuracy among these three algorithms with accuracy rate 95%. So that, in sample error rate is 0.05 or 5%, hence, we should expected higher out of sample expected rate. But after project submission I've received 19 of 20 correct answers.
 
-*Notes: I've commented out some execution code, in order to build html faster. 
+*Notes: I've commented out some execution code, in order to build html faster. I've got technical issues with converting Rmd into HTML using Knit. And executing such analysis on my hardware lasts wery long time. Literally, I had to train RF for overnight. So i even didn't try cross validation :)
 
 ```{r load_data}
 library(caret)
